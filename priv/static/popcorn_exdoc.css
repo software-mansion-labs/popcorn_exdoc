@@ -1,0 +1,16 @@
+  .popcorn-block { position: relative; margin-bottom: 1rem; }
+      .popcorn-run-btn {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        margin-top: 0.5rem; padding: 0.3rem 0.8rem;
+        background: #7c3aed; color: #fff; border: none; border-radius: 6px;
+        font-size: 0.85rem; cursor: pointer; transition: background 0.2s;
+      }
+      .popcorn-run-btn:hover:not(:disabled) { background: #6d28d9; }
+      .popcorn-run-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+      .popcorn-output {
+        margin-top: 0.4rem; padding: 0.7rem 1rem;
+        background: #1e1e2e; color: #cdd6f4;
+        border-left: 3px solid #7c3aed; border-radius: 0 6px 6px 0;
+        font-size: 0.85rem; white-space: pre-wrap; min-height: 2rem;
+      }
+      .popcorn-output.error { border-left-color: #f38ba8; color: #f38ba8; }
