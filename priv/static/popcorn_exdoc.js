@@ -12,7 +12,7 @@ var MESSAGES = {
   STDOUT: "popcorn-stdout",
   STDERR: "popcorn-stderr",
   HEARTBEAT: "popcorn-heartbeat",
-  RELOAD: "popcorn-reload"
+  RELOAD: "popcorn-reload",
 };
 var MESSAGES_TYPES = new Set(Object.values(MESSAGES));
 function isMessageType(type) {
@@ -23,7 +23,7 @@ function isMessageType(type) {
 var defaultErrorMessages = {
   timeout: "Promise timeout",
   deinitialized: "Call cancelled due to instance deinit",
-  reload: "Call cancelled due to iframe reload"
+  reload: "Call cancelled due to iframe reload",
 };
 var PopcornError = class extends Error {
   code;
@@ -46,25 +46,49 @@ function throwError(error) {
     case "assert":
       throw new PopcornInternalError("assert", "Assertion error");
     case "private_constructor":
-      throw new PopcornInternalError("private_constructor", "Don't construct the Popcorn object directly, use Popcorn.init() instead");
+      throw new PopcornInternalError(
+        "private_constructor",
+        "Don't construct the Popcorn object directly, use Popcorn.init() instead",
+      );
     case "bad_call":
-      throw new PopcornInternalError("bad_call", "Response for non-existent call");
+      throw new PopcornInternalError(
+        "bad_call",
+        "Response for non-existent call",
+      );
     case "no_acked_call":
-      throw new PopcornInternalError("no_acked_call", "Response for non-acknowledged call");
+      throw new PopcornInternalError(
+        "no_acked_call",
+        "Response for non-acknowledged call",
+      );
     case "bad_ack":
       throw new PopcornInternalError("bad_ack", "Ack for non-existent call");
     case "already_awaited":
-      throw new PopcornInternalError("already_awaited", `Cannot await message "${error.messageType}" when message "${error.awaitedMessageType}" is already awaited`);
+      throw new PopcornInternalError(
+        "already_awaited",
+        `Cannot await message "${error.messageType}" when message "${error.awaitedMessageType}" is already awaited`,
+      );
     case "already_mounted":
-      throw new PopcornInternalError("already_mounted", "Iframe already mounted");
+      throw new PopcornInternalError(
+        "already_mounted",
+        "Iframe already mounted",
+      );
     case "unmounted":
       throw new PopcornInternalError("unmounted", "WASM iframe not mounted");
     case "bad_target":
-      throw new PopcornInternalError("bad_target", "Unspecified target process");
+      throw new PopcornInternalError(
+        "bad_target",
+        "Unspecified target process",
+      );
     case "bad_status":
-      throw new PopcornInternalError("bad_status", `Operation not allowed: instance in "${error.status}" state, expected "${error.expectedStatus}"`);
+      throw new PopcornInternalError(
+        "bad_status",
+        `Operation not allowed: instance in "${error.status}" state, expected "${error.expectedStatus}"`,
+      );
     case "bundle_not_found":
-      throw new PopcornInternalError("bundle_not_found", `Could not find a valid .avm bundle at "${error.primary}" or fallback "${error.fallback}"`);
+      throw new PopcornInternalError(
+        "bundle_not_found",
+        `Could not find a valid .avm bundle at "${error.primary}" or fallback "${error.fallback}"`,
+      );
   }
 }
 
@@ -100,8 +124,7 @@ var IframeBridge = class {
   }
   sendIframeRequest(data) {
     const w = this.iframe.contentWindow;
-    if (w === null)
-      throwError({ t: "assert" });
+    if (w === null) throwError({ t: "assert" });
     w.postMessage(data);
   }
   deinit() {
@@ -115,16 +138,16 @@ var IframeBridge = class {
   }
 };
 function isIframeResponse(payload) {
-  if (typeof payload !== "object" || payload === null)
-    return false;
+  if (typeof payload !== "object" || payload === null) return false;
   if (!Object.hasOwn(payload, "type") || !Object.hasOwn(payload, "value"))
     return false;
-  if (typeof payload.type !== "string")
-    return false;
+  if (typeof payload.type !== "string") return false;
   return isMessageType(payload.type);
 }
 function metaTagsFrom(config) {
-  return Object.entries(config).map(([key, value]) => `<meta name="${key}" content="${value}" />`).join("\n");
+  return Object.entries(config)
+    .map(([key, value]) => `<meta name="${key}" content="${value}" />`)
+    .join("\n");
 }
 
 // node_modules/@swmansion/popcorn/dist/popcorn.mjs
@@ -143,14 +166,13 @@ var Popcorn = class _Popcorn {
   calls = /* @__PURE__ */ new Map();
   logListeners = {
     stdout: /* @__PURE__ */ new Set(),
-    stderr: /* @__PURE__ */ new Set()
+    stderr: /* @__PURE__ */ new Set(),
   };
   awaitedMessage = null;
   heartbeatTimeout = null;
   reloadN = 0;
   constructor(params, token) {
-    if (token !== INIT_TOKEN)
-      throwError({ t: "private_constructor" });
+    if (token !== INIT_TOKEN) throwError({ t: "private_constructor" });
     const bundlePath = params.bundlePath ?? "/bundle.avm";
     const bundleURL = new URL(bundlePath, import.meta.url);
     this.onReloadCallback = params.onReload ?? noop;
@@ -161,7 +183,7 @@ var Popcorn = class _Popcorn {
       script: { url: IFRAME_URL, entrypoint: "runIFrame" },
       config: { "bundle-path": this.bundleURL },
       debug: true,
-      onMessage: this.iframeHandler.bind(this)
+      onMessage: this.iframeHandler.bind(this),
     };
     this.logListeners.stdout.add(params.onStdout ?? console.log);
     this.logListeners.stderr.add(params.onStderr ?? console.warn);
@@ -182,15 +204,20 @@ var Popcorn = class _Popcorn {
   static async init(options) {
     const { container, ...constructorParams } = options;
     const containerWithDefault = container ?? document.documentElement;
-    const bundlePath = await resolveBundleURL(constructorParams.bundlePath ?? "/bundle.avm", "/assets/bundle.avm");
-    const popcorn = new _Popcorn({ ...constructorParams, bundlePath, container: containerWithDefault }, INIT_TOKEN);
+    const bundlePath = await resolveBundleURL(
+      constructorParams.bundlePath ?? "/bundle.avm",
+      "/assets/bundle.avm",
+    );
+    const popcorn = new _Popcorn(
+      { ...constructorParams, bundlePath, container: containerWithDefault },
+      INIT_TOKEN,
+    );
     popcorn.trace("Main: init, params: ", { container, ...constructorParams });
     await popcorn.mount();
     return popcorn;
   }
   async mount() {
-    if (this.bridge !== null)
-      throwError({ t: "already_mounted" });
+    if (this.bridge !== null) throwError({ t: "already_mounted" });
     this.assertStatus(["uninitialized", "reload"]);
     this.transition({ status: "mount" });
     this.trace("Main: mount, container: ", this.bridgeConfig.container);
@@ -200,13 +227,15 @@ var Popcorn = class _Popcorn {
       this.transition({ status: "await_vm" });
       this.trace("Main: iframe loaded");
       const startTime = performance.now();
-      const startVmResult = await withTimeout(this.awaitMessage(MESSAGES.START_VM).then((data) => ({
-        ok: true,
-        data,
-        durationMs: performance.now() - startTime
-      })), INIT_VM_TIMEOUT_MS);
-      if (!startVmResult.ok)
-        throwError({ t: "assert" });
+      const startVmResult = await withTimeout(
+        this.awaitMessage(MESSAGES.START_VM).then((data) => ({
+          ok: true,
+          data,
+          durationMs: performance.now() - startTime,
+        })),
+        INIT_VM_TIMEOUT_MS,
+      );
+      if (!startVmResult.ok) throwError({ t: "assert" });
       this.initProcess = startVmResult.data;
       this.transition({ status: "ready" });
       this.trace("Main: mounted, main process: ", this.initProcess);
@@ -235,24 +264,21 @@ var Popcorn = class _Popcorn {
   async call(args, { process, timeoutMs } = {}) {
     this.assertStatus(["ready"]);
     const targetProcess = process ?? this.initProcess;
-    if (this.bridge === null)
-      throwError({ t: "unmounted" });
-    if (targetProcess === null)
-      throwError({ t: "bad_target" });
+    if (this.bridge === null) throwError({ t: "unmounted" });
+    if (targetProcess === null) throwError({ t: "bad_target" });
     const requestId = this.requestId++;
     const startTimeMs = performance.now();
     const callPromise = new Promise((resolve) => {
-      if (this.bridge === null)
-        throwError({ t: "unmounted" });
+      if (this.bridge === null) throwError({ t: "unmounted" });
       this.trace("Main: call: ", { requestId, process, args });
       this.bridge.sendIframeRequest({
         type: MESSAGES.CALL,
-        value: { requestId, process: targetProcess, args }
+        value: { requestId, process: targetProcess, args },
       });
       this.calls.set(requestId, {
         acknowledged: false,
         startTimeMs,
-        resolve
+        resolve,
       });
     });
     const result = await withTimeout(callPromise, timeoutMs ?? CALL_TIMEOUT_MS);
@@ -268,23 +294,20 @@ var Popcorn = class _Popcorn {
   cast(args, { process } = {}) {
     this.assertStatus(["ready"]);
     const targetProcess = process ?? this.initProcess;
-    if (this.bridge === null)
-      throwError({ t: "unmounted" });
-    if (targetProcess === null)
-      throwError({ t: "bad_target" });
+    if (this.bridge === null) throwError({ t: "unmounted" });
+    if (targetProcess === null) throwError({ t: "bad_target" });
     const requestId = this.requestId++;
     this.trace("Main: cast: ", { requestId, process, args });
     this.bridge.sendIframeRequest({
       type: MESSAGES.CAST,
-      value: { requestId, process: targetProcess, args }
+      value: { requestId, process: targetProcess, args },
     });
   }
   /**
    * Destroys an iframe and resets the instance.
    */
   deinit() {
-    if (this.bridge === null)
-      throwError({ t: "unmounted" });
+    if (this.bridge === null) throwError({ t: "unmounted" });
     this.trace("Main: deinit");
     this.transition({ status: "deinit" });
     this.bridge.deinit();
@@ -301,7 +324,7 @@ var Popcorn = class _Popcorn {
       callData.resolve({
         ok: false,
         error: new PopcornError("deinitialized"),
-        durationMs
+        durationMs,
       });
     }
     this.calls.clear();
@@ -350,18 +373,15 @@ var Popcorn = class _Popcorn {
     this.assertStatus(["ready"]);
     this.trace("Main: onCallAck: ", { requestId });
     const callData = this.calls.get(requestId);
-    if (callData === void 0)
-      throwError({ t: "bad_ack" });
+    if (callData === void 0) throwError({ t: "bad_ack" });
     this.calls.set(requestId, { ...callData, acknowledged: true });
   }
   onCall({ requestId, error, data }) {
     this.assertStatus(["ready"]);
     this.trace("Main: onCall: ", { requestId, error, data });
     const callData = this.calls.get(requestId);
-    if (callData === void 0)
-      throwError({ t: "bad_call" });
-    if (!callData.acknowledged)
-      throwError({ t: "no_acked_call" });
+    if (callData === void 0) throwError({ t: "bad_call" });
+    if (!callData.acknowledged) throwError({ t: "no_acked_call" });
     this.calls.delete(requestId);
     const durationMs = performance.now() - callData.startTimeMs;
     if (error !== void 0) {
@@ -406,7 +426,7 @@ var Popcorn = class _Popcorn {
       callData.resolve({
         ok: false,
         error: new PopcornError("reload"),
-        durationMs
+        durationMs,
       });
     }
     this.calls.clear();
@@ -418,13 +438,12 @@ var Popcorn = class _Popcorn {
       throwError({
         t: "already_awaited",
         messageType: this.awaitedMessage.type,
-        awaitedMessageType: type
+        awaitedMessageType: type,
       });
     }
     this.awaitedMessage = { type };
     return new Promise((resolve) => {
-      if (!this.awaitedMessage)
-        throwError({ t: "assert" });
+      if (!this.awaitedMessage) throwError({ t: "assert" });
       this.awaitedMessage.resolve = resolve;
     });
   }
@@ -443,7 +462,7 @@ var Popcorn = class _Popcorn {
       throwError({
         t: "bad_status",
         status: currentStatus,
-        expectedStatus: validStatuses.join(" | ")
+        expectedStatus: validStatuses.join(" | "),
       });
     }
   }
@@ -455,18 +474,16 @@ async function withTimeout(promise, ms) {
       resolve({
         ok: false,
         error: new PopcornError("timeout"),
-        durationMs: ms
+        durationMs: ms,
       });
     }, ms);
   });
   const result = await Promise.race([promise, timeoutPromise]);
-  if (!timeout)
-    throwError({ t: "assert" });
+  if (!timeout) throwError({ t: "assert" });
   clearTimeout(timeout);
   return result;
 }
-function noop() {
-}
+function noop() {}
 async function resolveBundleURL(primary, fallback) {
   const fetchBundle = async (path) => {
     const url = new URL(path, import.meta.url).href;
@@ -622,8 +639,136 @@ function decorateBlocks() {
   }
 }
 
+// src/iex.js
+function parseInputContents(rawText) {
+  const inputs = [];
+  let current = null;
+  for (const line of rawText.split("\n")) {
+    if (line.startsWith("iex> ")) {
+      if (current !== null) inputs.push(current);
+      current = line.slice(5);
+    } else if (line.startsWith("...> ") && current !== null) {
+      current += "\n" + line.slice(5);
+    } else if (current !== null) {
+      inputs.push(current);
+      current = null;
+    }
+  }
+  if (current !== null) inputs.push(current);
+  return inputs;
+}
+function findOrCreateOutputForPrompt(promptSpan) {
+  const lineWrapper = promptSpan.closest(".popcorn-iex-line");
+  if (!lineWrapper) return null;
+  let sibling = lineWrapper.nextElementSibling;
+  while (sibling && sibling.classList.contains("popcorn-iex-continuation")) {
+    sibling = sibling.nextElementSibling;
+  }
+  const outputSiblings = [];
+  while (sibling && sibling.classList.contains("output")) {
+    outputSiblings.push(sibling);
+    sibling = sibling.nextElementSibling;
+  }
+  if (outputSiblings.length > 0) {
+    for (let i = 1; i < outputSiblings.length; i++) {
+      outputSiblings[i].remove();
+    }
+    return outputSiblings[0];
+  }
+  let insertAfter = lineWrapper;
+  let next = lineWrapper.nextElementSibling;
+  while (next && next.classList.contains("popcorn-iex-continuation")) {
+    insertAfter = next;
+    next = next.nextElementSibling;
+  }
+  const outputEl = document.createElement("span");
+  outputEl.className = "output";
+  outputEl.style.display = "block";
+  insertAfter.insertAdjacentElement("afterend", outputEl);
+  return outputEl;
+}
+async function runIexInput(code, promptSpan, blockId) {
+  if (
+    promptSpan.dataset.codeState === "EVALUATING" ||
+    promptSpan.dataset.codeState === "EVALUATED"
+  )
+    return;
+  promptSpan.dataset.codeState = "EVALUATING";
+  const outputEl = findOrCreateOutputForPrompt(promptSpan);
+  if (!outputEl) return;
+  const cancelStatus = renderEvaluationStatus(outputEl, "Evaluating\u2026");
+  try {
+    const popcorn = await getPopcorn();
+    const stopLogCapture = startLogCapture(popcorn);
+    const result = await popcorn.call(["eval_elixir", code, blockId], {
+      timeoutMs: 3e4,
+    });
+    const { stdout, stderr } = stopLogCapture();
+    outputEl.style.visibility = "visible";
+    cancelStatus();
+    renderOutput(outputEl, {
+      data: result.ok ? result.data : null,
+      error: result.ok ? null : result.error,
+      stdout,
+      stderr,
+    });
+    promptSpan.dataset.codeState = result.ok ? "EVALUATED" : "NOT_EVALUATED";
+  } catch (e) {
+    cancelStatus();
+    outputEl.innerHTML = "";
+    outputEl.appendChild(renderCompilerError(String(e)));
+    promptSpan.dataset.codeState = "NOT_EVALUATED";
+  }
+}
+function isIexPrompt(node) {
+  return node.classList?.contains("gp") && node.textContent.trim() === "iex>";
+}
+function isIexContinuation(node) {
+  return node.classList?.contains("gp") && node.textContent.trim() === "...>";
+}
+function decorateIexBlocks() {
+  for (const codeEl of document.querySelectorAll("pre.popcorn-iex code")) {
+    if (codeEl.dataset.popcornProcessed) continue;
+    codeEl.dataset.popcornProcessed = "true";
+    const blockId = crypto.randomUUID();
+    const inputContents = parseInputContents(codeEl.textContent);
+    const lines = [];
+    let currentLine = [];
+    for (const node of Array.from(codeEl.childNodes)) {
+      currentLine.push(node);
+      if (node.textContent.includes("\n")) {
+        lines.push(currentLine);
+        currentLine = [];
+      }
+    }
+    if (currentLine.length > 0) lines.push(currentLine);
+    codeEl.innerHTML = "";
+    for (const line of lines) {
+      const hasPrompt = line.some(isIexPrompt);
+      const hasContinuation = line.some(isIexContinuation);
+      const wrapper = document.createElement("span");
+      wrapper.className = hasPrompt
+        ? "popcorn-iex-line"
+        : hasContinuation
+          ? "popcorn-iex-continuation"
+          : "output";
+      wrapper.append(...line);
+      codeEl.appendChild(wrapper);
+    }
+    codeEl.querySelectorAll(".gp").forEach((promptSpan, idx) => {
+      if (promptSpan.textContent.trim() !== "iex>") return;
+      promptSpan.dataset.codeState = "NOT_EVALUATED";
+      promptSpan.style.cursor = "pointer";
+      promptSpan.addEventListener("click", () =>
+        runIexInput(inputContents[idx] ?? "", promptSpan, blockId),
+      );
+    });
+  }
+}
+
 // popcorn_exdoc.js
 window.addEventListener("exdoc:loaded", () => {
   initPopcorn();
   decorateBlocks();
+  decorateIexBlocks();
 });

@@ -9,7 +9,9 @@ async function runCode(code, btn, output) {
 
   const popcorn = await getPopcorn();
   const stopLogCapture = startLogCapture(popcorn);
-  const result = await popcorn.call(["eval_elixir", code], { timeoutMs: 30_000 });
+  const result = await popcorn.call(["eval_elixir", code], {
+    timeoutMs: 30_000,
+  });
   const { stdout, stderr } = stopLogCapture();
 
   cancelStatus();
