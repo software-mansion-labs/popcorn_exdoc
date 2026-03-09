@@ -1,0 +1,9 @@
+{
+  "name": "popcorn-exdoc-client",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@swmansion/popcorn": "0.2.0-rc.6",
+    "esbuild": "^0.25.0"
+  }
+}

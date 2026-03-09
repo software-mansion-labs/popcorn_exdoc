@@ -1,6 +1,8 @@
 # The directory Mix will write compiled artifacts to.
 /_build/
 
+/out
+
 # If you run "mix test --cover", coverage assets end up here.
 /cover/
 
@@ -24,3 +26,9 @@ popcorn_exdoc-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+priv/static/wasm/*
+!priv/static/wasm/*.avm
+
+/client/node_modules/
+/client/package-lock.json

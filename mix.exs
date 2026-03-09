@@ -8,9 +8,9 @@ defmodule PopcornExDoc.MixProject do
     [
       app: :popcorn_ex_doc,
       version: @version,
-      elixir: "~> 1.15",
+      elixir: "~> 1.17",
       start_permanent: false,
-      deps: deps(),
+      deps: [],
       name: "PopcornExDoc",
       description: "ExDoc extension for interactive Elixir code evaluation via Popcorn/WASM",
       source_url: @source_url,
@@ -19,22 +19,11 @@ defmodule PopcornExDoc.MixProject do
     ]
   end
 
-  def application do
-    [extra_applications: [:inets, :ssl]]
-  end
-
-  defp deps do
-    [
-      {:esbuild, "~> 0.10", optional: true},
-      {:castore, ">= 0.0.0"}
-    ]
-  end
+  def application, do: []
 
   defp package do
     [
       name: "popcorn_ex_doc",
-      # Note: priv/static contains our small orchestrator JS + CSS
-      # (NOT the full WASM runtime — that's downloaded at install time)
       files: ~w(lib priv .formatter.exs mix.exs README* LICENSE*),
       licenses: ["Apache-2.0"],
       links: %{"GitHub" => @source_url}

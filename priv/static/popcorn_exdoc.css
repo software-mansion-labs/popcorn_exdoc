@@ -1,16 +1,159 @@
-  .popcorn-block { position: relative; margin-bottom: 1rem; }
-      .popcorn-run-btn {
-        display: inline-flex; align-items: center; gap: 0.4rem;
-        margin-top: 0.5rem; padding: 0.3rem 0.8rem;
-        background: #7c3aed; color: #fff; border: none; border-radius: 6px;
-        font-size: 0.85rem; cursor: pointer; transition: background 0.2s;
-      }
-      .popcorn-run-btn:hover:not(:disabled) { background: #6d28d9; }
-      .popcorn-run-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-      .popcorn-output {
-        margin-top: 0.4rem; padding: 0.7rem 1rem;
-        background: #1e1e2e; color: #cdd6f4;
-        border-left: 3px solid #7c3aed; border-radius: 0 6px 6px 0;
-        font-size: 0.85rem; white-space: pre-wrap; min-height: 2rem;
-      }
-      .popcorn-output.error { border-left-color: #f38ba8; color: #f38ba8; }
+:root {
+  --popcorn-eval-gap: 0.75rem;
+  --popcorn-output-gap: 0.5rem;
+
+  --popcorn-btn-bg: #7c3aed;
+  --popcorn-btn-bg-hover: #6d28d9;
+  --popcorn-output-bg: #1e1e2e;
+  --popcorn-output-color: #cdd6f4;
+  --popcorn-output-border: #7c3aed;
+  --popcorn-output-error: #f38ba8;
+
+  --popcorn-stdout-bg: #252535;
+  --popcorn-stdout-color: #cdd6f4;
+
+  --popcorn-warning-bg: #2a2510;
+  --popcorn-warning-border: #6b4e00;
+  --popcorn-warning-color: #e8b84b;
+
+  --popcorn-error-bg: #2a1010;
+  --popcorn-error-border: #7a2020;
+  --popcorn-error-color: #f38ba8;
+}
+
+.popcorn-block {
+  position: relative;
+  margin: var(--baseLineHeight) 0;
+}
+.popcorn-eval,
+.popcorn-iex {
+  margin: var(--popcorn-eval-gap) 0 !important;
+}
+.popcorn-iex .output {
+  visibility: hidden;
+  /* padding-top: var(--popcorn-output-gap); */
+  /* display: flex;
+  flex-direction: column;
+  gap: var(--popcorn-output-gap); */
+}
+
+.popcorn-run-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  padding: 0.3rem 0.8rem;
+  background: var(--popcorn-btn-bg);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.popcorn-run-btn:hover:not(:disabled) {
+  background: var(--popcorn-btn-bg-hover);
+}
+.popcorn-run-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.popcorn-output {
+  display: flex;
+  flex-direction: column;
+  gap: var(--popcorn-output-gap);
+  margin-top: var(--popcorn-eval-gap) !important;
+  padding: 0.7rem 1rem;
+  background: var(--popcorn-output-bg);
+  color: var(--popcorn-output-color);
+  border-left: 3px solid var(--popcorn-output-border);
+  border-radius: 0 6px 6px 0;
+  font-size: 0.85rem;
+  font-family: var(--monoFontFamily);
+  white-space: pre-wrap;
+  min-height: 2rem;
+}
+.popcorn-output.error {
+  border-left-color: var(--popcorn-output-error);
+  color: var(--popcorn-output-error);
+}
+
+/* ── Return value ────────────────────────────────────────── */
+
+.popcorn-return-value {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.popcorn-return-arrow {
+  color: var(--popcorn-output-color);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.popcorn-return-data {
+  color: #ef7c00;
+  word-break: break-word;
+}
+
+/* ── Stdout ──────────────────────────────────────────────── */
+
+.popcorn-stdout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  background: var(--popcorn-stdout-bg);
+  border-radius: 4px;
+  padding: 0.4rem 0.6rem;
+}
+
+.popcorn-stdout-line {
+  font-size: 0.8rem;
+  color: var(--popcorn-stdout-color);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Message base (warning / error) ─────────────────────── */
+
+.popcorn-message {
+  border-radius: 4px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid;
+  margin-bottom: var(--popcorn-output-gap);
+}
+
+.popcorn-message--warning {
+  background: var(--popcorn-warning-bg);
+  border-color: var(--popcorn-warning-border);
+  margin-top: var(--popcorn-output-gap);
+}
+
+.popcorn-message--error {
+  background: var(--popcorn-error-bg);
+  border-color: var(--popcorn-error-border);
+  margin-top: var(--popcorn-output-gap);
+}
+
+/* ── Stderr lines ────────────────────────────────────────── */
+
+.popcorn-stderr-line {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--popcorn-warning-color);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Compiler error ──────────────────────────────────────── */
+
+.popcorn-compiler-error {
+  margin: 0 !important;
+  font-size: 0.8rem;
+  color: var(--popcorn-error-color);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
