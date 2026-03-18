@@ -1,9 +1,5 @@
 import { getPopcorn, startLogCapture } from "./runtime.js";
-import {
-  renderOutput,
-  renderCompilerError,
-  renderEvaluationStatus,
-} from "./render.js";
+import { renderOutput, renderEvaluationStatus } from "./render.js";
 
 function parseInputContents(rawText) {
   const inputs = [];
@@ -76,33 +72,23 @@ async function runIexInput(code, promptSpan, blockId) {
   const outputEl = findOrCreateOutputForPrompt(promptSpan);
   if (!outputEl) return;
 
-  const cancelStatus = renderEvaluationStatus(outputEl, "Evaluating\u2026");
+  const cancelStatus = renderEvaluationStatus(outputEl, "Evaluating…");
 
-  try {
-    const popcorn = await getPopcorn();
+  const popcorn = await getPopcorn();
+  const stopLogCapture = startLogCapture(popcorn);
+  const result = await popcorn.call(["eval_elixir", code, blockId], { timeoutMs: 30_000 });
+  const { stdout, stderr } = stopLogCapture();
 
-    const stopLogCapture = startLogCapture(popcorn);
-    const result = await popcorn.call(["eval_elixir", code, blockId], {
-      timeoutMs: 30_000,
-    });
-    const { stdout, stderr } = stopLogCapture();
+  outputEl.style.visibility = "visible";
+  cancelStatus();
+  renderOutput(outputEl, {
+    data: result.ok ? result.data : null,
+    error: result.ok ? null : result.error,
+    stdout,
+    stderr,
+  });
 
-    outputEl.style.visibility = "visible";
-    cancelStatus();
-    renderOutput(outputEl, {
-      data: result.ok ? result.data : null,
-      error: result.ok ? null : result.error,
-      stdout,
-      stderr,
-    });
-
-    promptSpan.dataset.codeState = result.ok ? "EVALUATED" : "NOT_EVALUATED";
-  } catch (e) {
-    cancelStatus();
-    outputEl.innerHTML = "";
-    outputEl.appendChild(renderCompilerError(String(e)));
-    promptSpan.dataset.codeState = "NOT_EVALUATED";
-  }
+  promptSpan.dataset.codeState = result.ok ? "EVALUATED" : "NOT_EVALUATED";
 }
 
 function isIexPrompt(node) {
