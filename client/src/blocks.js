@@ -1,40 +1,25 @@
 import { getPopcorn, startLogCapture } from "./runtime.js";
-import {
-  renderOutput,
-  renderCompilerError,
-  renderEvaluationStatus,
-} from "./render.js";
+import { renderOutput, renderEvaluationStatus } from "./render.js";
 
 async function runCode(code, btn, output) {
   if (output.dataset.evaluated === "true") return;
 
   btn.disabled = true;
-  const cancelStatus = renderEvaluationStatus(output, "Evaluating\u2026");
+  const cancelStatus = renderEvaluationStatus(output, "Evaluating…");
 
-  try {
-    const popcorn = await getPopcorn();
+  const popcorn = await getPopcorn();
+  const stopLogCapture = startLogCapture(popcorn);
+  const result = await popcorn.call(["eval_elixir", code], { timeoutMs: 30_000 });
+  const { stdout, stderr } = stopLogCapture();
 
-    const stopLogCapture = startLogCapture(popcorn);
-    const result = await popcorn.call(["eval_elixir", code], {
-      timeoutMs: 30_000,
-    });
-    const { stdout, stderr } = stopLogCapture();
-
-    cancelStatus();
-    if (result.ok) {
-      renderOutput(output, { data: result.data, error: null, stdout, stderr });
-      output.dataset.evaluated = "true";
-    } else {
-      renderOutput(output, { data: null, error: result.error, stdout, stderr });
-    }
-    // TODO: remove catch because popcorn.call should never throw error
-  } catch (e) {
-    cancelStatus();
-    output.innerHTML = "";
-    output.appendChild(renderCompilerError(String(e)));
-  } finally {
-    btn.disabled = false;
+  cancelStatus();
+  if (result.ok) {
+    renderOutput(output, { data: result.data, error: null, stdout, stderr });
+    output.dataset.evaluated = "true";
+  } else {
+    renderOutput(output, { data: null, error: result.error, stdout, stderr });
   }
+  btn.disabled = false;
 }
 
 export function decorateBlocks() {
