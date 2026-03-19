@@ -1,0 +1,34 @@
+name: Deploy Docs
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.17"
+          otp-version: "27"
+      - run: mix deps.get
+      - run: mix docs
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: doc/
+      - id: deployment
+        uses: actions/deploy-pages@v4

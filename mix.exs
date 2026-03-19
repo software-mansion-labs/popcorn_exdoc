@@ -10,16 +10,22 @@ defmodule PopcornExDoc.MixProject do
       version: @version,
       elixir: "~> 1.17",
       start_permanent: false,
-      deps: [],
+      deps: deps(),
       name: "PopcornExDoc",
       description: "ExDoc extension for interactive Elixir code evaluation via Popcorn/WASM",
       source_url: @source_url,
       package: package(),
-      docs: docs()
+      docs: &docs/0
     ]
   end
 
   def application, do: []
+
+  defp deps do
+    [
+      {:ex_doc, "~> 0.34", only: :dev, runtime: false, warn_if_outdated: true}
+    ]
+  end
 
   defp package do
     [
@@ -31,6 +37,15 @@ defmodule PopcornExDoc.MixProject do
   end
 
   defp docs do
-    [main: "PopcornExDoc", extras: ["README.md"]]
+    [
+      main: "PopcornExDoc",
+      extras: ["README.md", "guides/examples.md"],
+      assets: %{"docs_assets" => "."},
+      before_closing_head_tag: fn
+        :html -> ~s(<script src="coi-serviceworker.js"></script>)
+        _ -> ""
+      end
+    ]
+    |> PopcornExDoc.config()
   end
 end
