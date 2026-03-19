@@ -17,5 +17,5 @@ await esbuild.build({
   bundle: true,
   format: "esm",
   outdir,
-  plugins: [popcorn({ bundlePath })],
+  plugins: [popcorn({ bundlePaths: [bundlePath] })],
 });

@@ -56,7 +56,7 @@ if (ENVIRONMENT_IS_PTHREAD) {
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-// include: /tmp/atomvm-build-swm.etp6TAu/atomvm/src/platforms/emscripten/src/atomvm.pre.js
+// include: /tmp/atomvm-build-swm.0q6I6ZL/atomvm/src/platforms/emscripten/src/atomvm.pre.js
 /*
  * This file is part of AtomVM.
  *
@@ -128,7 +128,7 @@ function ensureValidResult(result) {
   throw new Error(message);
 }
 
-// end include: /tmp/atomvm-build-swm.etp6TAu/atomvm/src/platforms/emscripten/src/atomvm.pre.js
+// end include: /tmp/atomvm-build-swm.0q6I6ZL/atomvm/src/platforms/emscripten/src/atomvm.pre.js
 var arguments_ = [];
 
 var thisProgram = "./this.program";
@@ -7366,19 +7366,19 @@ function checkIncomingModuleAPI() {
 }
 
 var ASM_CONSTS = {
-  78463: ($0, $1) => {
+  77839: ($0, $1) => {
     promiseMap.get($0).resolve($1);
   },
-  78499: ($0, $1) => {
+  77875: ($0, $1) => {
     promiseMap.get($0).reject($1);
   },
-  78534: ($0, $1) => {
+  77910: ($0, $1) => {
     promiseMap.get($0).resolve(UTF8ToString($1));
   },
-  78584: ($0, $1) => {
+  77960: ($0, $1) => {
     promiseMap.get($0).reject(UTF8ToString($1));
   },
-  78633: $0 => {
+  78009: $0 => {
     Module["onTrackedObjectDelete"]($0);
   }
 };

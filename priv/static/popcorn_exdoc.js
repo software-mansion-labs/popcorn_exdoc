@@ -182,7 +182,7 @@ var Popcorn = class _Popcorn {
   static async init(options) {
     const { container, ...constructorParams } = options;
     const containerWithDefault = container ?? document.documentElement;
-    const bundlePath = await resolveBundleURL(constructorParams.bundlePath ?? "/bundle.avm", "/assets/bundle.avm");
+    const bundlePath = constructorParams.bundlePath ? constructorParams.bundlePath : await resolveBundleURL("/bundle.avm", "/assets/bundle.avm");
     const popcorn = new _Popcorn({ ...constructorParams, bundlePath, container: containerWithDefault }, INIT_TOKEN);
     popcorn.trace("Main: init, params: ", { container, ...constructorParams });
     await popcorn.mount();
