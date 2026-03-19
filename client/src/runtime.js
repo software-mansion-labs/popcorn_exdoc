@@ -5,7 +5,7 @@ let initPromise = null;
 
 export function initPopcorn() {
   initPromise = (async () => {
-    popcornInstance = await Popcorn.init({ debug: true });
+    popcornInstance = await Popcorn.init({ debug: true, bundlePath: "./bundle.avm" });
   })();
 
   initPromise.catch((e) => {

@@ -489,7 +489,7 @@ var popcornInstance = null;
 var initPromise = null;
 function initPopcorn() {
   initPromise = (async () => {
-    popcornInstance = await Popcorn.init({ debug: true });
+    popcornInstance = await Popcorn.init({ debug: true, bundlePath: "./bundle.avm" });
   })();
   initPromise.catch((e) => {
     console.error("Failed to initialize Popcorn runtime:", e);
