@@ -4,9 +4,27 @@
 
   --popcorn-btn-bg: #7c3aed;
   --popcorn-btn-bg-hover: #6d28d9;
+  --popcorn-output-bg: #f5f3ff;
+  --popcorn-output-color: #1e1b2e;
+  --popcorn-output-border: #7c3aed;
+  --popcorn-output-error: #c0152b;
+
+  --popcorn-stdout-bg: #ede9fe;
+  --popcorn-stdout-color: #1e1b2e;
+
+  --popcorn-warning-bg: #fffbea;
+  --popcorn-warning-border: #d97706;
+  --popcorn-warning-color: #92400e;
+
+  --popcorn-error-bg: #fff1f2;
+  --popcorn-error-border: #f43f5e;
+  --popcorn-error-color: #c0152b;
+  --popcorn-return-color: #7c3aed;
+}
+
+body.dark {
   --popcorn-output-bg: #1e1e2e;
   --popcorn-output-color: #cdd6f4;
-  --popcorn-output-border: #7c3aed;
   --popcorn-output-error: #f38ba8;
 
   --popcorn-stdout-bg: #252535;
@@ -19,6 +37,7 @@
   --popcorn-error-bg: #2a1010;
   --popcorn-error-border: #7a2020;
   --popcorn-error-color: #f38ba8;
+  --popcorn-return-color: #ef7c00;
 }
 
 .popcorn-block {
@@ -94,7 +113,7 @@
 }
 
 .popcorn-return-data {
-  color: #ef7c00;
+  color: var(--popcorn-return-color);
   word-break: break-word;
 }
 
