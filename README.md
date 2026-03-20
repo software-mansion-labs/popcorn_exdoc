@@ -71,6 +71,10 @@ IO.puts("Hello from WASM!")
 
 ExDoc will render this as an interactive block with a **Run** button. Clicking it evaluates the code in the browser and shows stdout, return value, and any errors inline.
 
+### Example
+
+![Example eval block](assets/example-eval-block.png)
+
 ---
 
 ## Project structure
