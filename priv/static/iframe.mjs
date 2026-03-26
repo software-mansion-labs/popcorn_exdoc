@@ -33,15 +33,19 @@ class TrackedValue {
 }
 globalThis.TrackedValue = TrackedValue;
 async function runIFrame() {
-    const metaElement = document.querySelector('meta[name="bundle-path"]');
-    if (!metaElement) {
-        throw new Error("Missing meta[name='bundle-path'] element");
-    }
-    const bundlePath = metaElement.content;
-    const bundleBuffer = await fetch(bundlePath).then((resp) => resp.arrayBuffer());
-    const bundle = new Int8Array(bundleBuffer);
+    const bundlePaths = Array.from(
+        document.querySelectorAll('meta[name^="bundle-path-"]'),
+        (el) => el.content,
+    );
+    const bundles = await Promise.all(
+        bundlePaths.map(async (p) => {
+            const resp = await fetch(p);
+            const buf = await resp.arrayBuffer();
+            return new Int8Array(buf);
+        }),
+    );
     sendIframeResponse(MESSAGES.INIT, null);
-    const initProcess = await startVm(bundle);
+    const initProcess = await startVm(bundles);
     window.addEventListener("message", async ({ data }) => {
         const type = data.type;
         if (type === MESSAGES.CALL) {
@@ -54,7 +58,8 @@ async function runIFrame() {
     sendIframeResponse(MESSAGES.START_VM, initProcess);
     setInterval(() => sendIframeResponse(MESSAGES.HEARTBEAT, null), HEARTBEAT_INTERVAL_MS);
 }
-async function startVm(avmBundle) {
+async function startVm(avmBundles) {
+    const bundleFilePaths = avmBundles.map((_, i) => `/data/bundle-${i}.avm`);
     let resolveResultPromise = null;
     const resultPromise = new Promise((resolve) => {
         resolveResultPromise = resolve;
@@ -63,10 +68,12 @@ async function startVm(avmBundle) {
         preRun: [
             function ({ FS }) {
                 FS.mkdir("/data");
-                FS.writeFile("/data/bundle.avm", avmBundle);
+                avmBundles.forEach((bundle, i) => {
+                    FS.writeFile(bundleFilePaths[i], bundle);
+                });
             },
         ],
-        arguments: ["/data/bundle.avm"],
+        arguments: bundleFilePaths,
         print(text) {
             sendIframeResponse(MESSAGES.STDOUT, text);
         },

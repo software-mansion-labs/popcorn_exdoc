@@ -1,6 +1,8 @@
 defmodule Mix.Tasks.PopcornExdoc.Build do
   use Mix.Task
 
+  import Mix.Tasks.PopcornExdoc.Helpers
+
   @shortdoc "Rebuilds prebuilt assets in priv/static (maintainers only)"
 
   @project_root Path.expand("../../..", __DIR__)
@@ -14,21 +16,14 @@ defmodule Mix.Tasks.PopcornExdoc.Build do
     File.mkdir_p!(@build_tmp)
 
     step("Building bundle.avm", fn ->
-      mix = find!("mix")
-      cmd!(mix, ["deps.get"], @wasm_dir)
-      cmd!(mix, ["popcorn.cook", "--out-dir", @build_tmp], @wasm_dir)
+      cook_bundle(@wasm_dir, @build_tmp)
     end)
 
     step("Building JS bundle", fn ->
       npm = find!("npm")
       node = find!("node")
       cmd!(npm, ["install"], @client_dir)
-
-      cmd!(
-        node,
-        ["build.mjs", @build_tmp, Path.join(@build_tmp, "bundle.avm")],
-        @client_dir
-      )
+      cmd!(node, ["build.mjs", @build_tmp, Path.join(@build_tmp, "bundle.avm")], @client_dir)
     end)
 
     step("Copying assets to priv/static", fn ->
@@ -37,27 +32,10 @@ defmodule Mix.Tasks.PopcornExdoc.Build do
       end
     end)
 
-    step("Cleaning bundle build temp", fn ->
+    step("Cleaning up", fn ->
       File.rm_rf!(@build_tmp)
     end)
 
     Mix.shell().info("Done.")
-  end
-
-  defp step(label, fun) do
-    Mix.shell().info("==> #{label}...")
-    fun.()
-  end
-
-  defp cmd!(exe, args, dir) do
-    case System.cmd(exe, args, cd: dir, into: IO.stream()) do
-      {_, 0} -> :ok
-      {_, code} -> Mix.raise("`#{exe} #{Enum.join(args, " ")}` failed (exit #{code})")
-    end
-  end
-
-  defp find!(name) do
-    System.find_executable(name) ||
-      Mix.raise("#{name} not found. Please install Node.js (https://nodejs.org).")
   end
 end
