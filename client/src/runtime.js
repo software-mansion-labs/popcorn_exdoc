@@ -4,8 +4,14 @@ let popcornInstance = null;
 let initPromise = null;
 
 export function initPopcorn() {
+  if (initPromise) return;
+
+  const userBundleMeta = document.querySelector('meta[name="popcorn-user-bundle"]');
+  const bundlePaths = ["./bundle.avm"];
+  if (userBundleMeta) bundlePaths.push(userBundleMeta.content);
+
   initPromise = (async () => {
-    popcornInstance = await Popcorn.init({ debug: true, bundlePath: "./bundle.avm" });
+    popcornInstance = await Popcorn.init({ debug: true, bundlePaths });
   })();
 
   initPromise.catch((e) => {

@@ -1,0 +1,130 @@
+diff --git a/node_modules/@swmansion/popcorn/dist/iframe.mjs b/node_modules/@swmansion/popcorn/dist/iframe.mjs
+index 3c7b117..7d68cb0 100644
+--- a/node_modules/@swmansion/popcorn/dist/iframe.mjs
++++ b/node_modules/@swmansion/popcorn/dist/iframe.mjs
+@@ -33,15 +33,19 @@ class TrackedValue {
+ }
+ globalThis.TrackedValue = TrackedValue;
+ async function runIFrame() {
+-    const metaElement = document.querySelector('meta[name="bundle-path"]');
+-    if (!metaElement) {
+-        throw new Error("Missing meta[name='bundle-path'] element");
+-    }
+-    const bundlePath = metaElement.content;
+-    const bundleBuffer = await fetch(bundlePath).then((resp) => resp.arrayBuffer());
+-    const bundle = new Int8Array(bundleBuffer);
++    const bundlePaths = Array.from(
++        document.querySelectorAll('meta[name^="bundle-path-"]'),
++        (el) => el.content,
++    );
++    const bundles = await Promise.all(
++        bundlePaths.map(async (p) => {
++            const resp = await fetch(p);
++            const buf = await resp.arrayBuffer();
++            return new Int8Array(buf);
++        }),
++    );
+     sendIframeResponse(MESSAGES.INIT, null);
+-    const initProcess = await startVm(bundle);
++    const initProcess = await startVm(bundles);
+     window.addEventListener("message", async ({ data }) => {
+         const type = data.type;
+         if (type === MESSAGES.CALL) {
+@@ -54,7 +58,8 @@ async function runIFrame() {
+     sendIframeResponse(MESSAGES.START_VM, initProcess);
+     setInterval(() => sendIframeResponse(MESSAGES.HEARTBEAT, null), HEARTBEAT_INTERVAL_MS);
+ }
+-async function startVm(avmBundle) {
++async function startVm(avmBundles) {
++    const bundleFilePaths = avmBundles.map((_, i) => `/data/bundle-${i}.avm`);
+     let resolveResultPromise = null;
+     const resultPromise = new Promise((resolve) => {
+         resolveResultPromise = resolve;
+@@ -63,10 +68,12 @@ async function startVm(avmBundle) {
+         preRun: [
+             function ({ FS }) {
+                 FS.mkdir("/data");
+-                FS.writeFile("/data/bundle.avm", avmBundle);
++                avmBundles.forEach((bundle, i) => {
++                    FS.writeFile(bundleFilePaths[i], bundle);
++                });
+             },
+         ],
+-        arguments: ["/data/bundle.avm"],
++        arguments: bundleFilePaths,
+         print(text) {
+             sendIframeResponse(MESSAGES.STDOUT, text);
+         },
+diff --git a/node_modules/@swmansion/popcorn/dist/popcorn.d.ts b/node_modules/@swmansion/popcorn/dist/popcorn.d.ts
+index 8535171..0254253 100644
+--- a/node_modules/@swmansion/popcorn/dist/popcorn.d.ts
++++ b/node_modules/@swmansion/popcorn/dist/popcorn.d.ts
+@@ -7,8 +7,8 @@ export type { PopcornErrorCode, PopcornInternalErrorCode };
+ export type PopcornInitOptions = {
+     /** DOM element to mount an iframe */
+     container?: HTMLElement;
+-    /** Path to compiled Elixir bundle (`.avm` file). */
+-    bundlePath?: string;
++    /** Paths to compiled Elixir bundles (`.avm` files). */
++    bundlePaths?: string[];
+     /** Handler for stderr messages. */
+     onStderr?: (message: string) => void;
+     /** Handler for stdout messages. */
+@@ -58,7 +58,7 @@ export declare class Popcorn {
+     private bridge;
+     private bridgeConfig;
+     private debug;
+-    private bundleURL;
++    private bundleURLs;
+     private state;
+     private initProcess;
+     private requestId;
+diff --git a/node_modules/@swmansion/popcorn/dist/popcorn.mjs b/node_modules/@swmansion/popcorn/dist/popcorn.mjs
+index 20ceb79..3b2ab72 100644
+--- a/node_modules/@swmansion/popcorn/dist/popcorn.mjs
++++ b/node_modules/@swmansion/popcorn/dist/popcorn.mjs
+@@ -14,7 +14,7 @@ class Popcorn {
+     bridge = null;
+     bridgeConfig;
+     debug = false;
+-    bundleURL;
++    bundleURLs;
+     state = { status: "uninitialized" };
+     initProcess = null;
+     requestId = 0;
+@@ -29,15 +29,16 @@ class Popcorn {
+     constructor(params, token) {
+         if (token !== INIT_TOKEN)
+             throwError({ t: "private_constructor" });
+-        const bundlePath = params.bundlePath ?? "/bundle.avm";
+-        const bundleURL = new URL(bundlePath, import.meta.url);
++        const bundlePaths = params.bundlePaths ?? ["/bundle.avm"];
++        this.bundleURLs = bundlePaths.map((p) => new URL(p, import.meta.url).href);
+         this.onReloadCallback = params.onReload ?? noop;
+         this.debug = params.debug ?? false;
+-        this.bundleURL = bundleURL.href;
+         this.bridgeConfig = {
+             container: params.container,
+             script: { url: IFRAME_URL, entrypoint: "runIFrame" },
+-            config: { "bundle-path": this.bundleURL },
++            config: Object.fromEntries(
++                this.bundleURLs.map((url, i) => [`bundle-path-${i}`, url]),
++            ),
+             debug: true,
+             onMessage: this.iframeHandler.bind(this),
+         };
+@@ -60,10 +61,10 @@ class Popcorn {
+     static async init(options) {
+         const { container, ...constructorParams } = options;
+         const containerWithDefault = container ?? document.documentElement;
+-        const bundlePath = constructorParams.bundlePath
+-            ? constructorParams.bundlePath
+-            : await resolveBundleURL("/bundle.avm", "/assets/bundle.avm");
+-        const popcorn = new Popcorn({ ...constructorParams, bundlePath, container: containerWithDefault }, INIT_TOKEN);
++        const bundlePaths = constructorParams.bundlePaths && constructorParams.bundlePaths.length > 0
++            ? constructorParams.bundlePaths
++            : [await resolveBundleURL("/bundle.avm", "/assets/bundle.avm")];
++        const popcorn = new Popcorn({ ...constructorParams, bundlePaths, container: containerWithDefault }, INIT_TOKEN);
+         popcorn.trace("Main: init, params: ", { container, ...constructorParams });
+         await popcorn.mount();
+         return popcorn;

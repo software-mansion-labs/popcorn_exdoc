@@ -136,7 +136,7 @@ var Popcorn = class _Popcorn {
   bridge = null;
   bridgeConfig;
   debug = false;
-  bundleURL;
+  bundleURLs;
   state = { status: "uninitialized" };
   initProcess = null;
   requestId = 0;
@@ -151,15 +151,16 @@ var Popcorn = class _Popcorn {
   constructor(params, token) {
     if (token !== INIT_TOKEN)
       throwError({ t: "private_constructor" });
-    const bundlePath = params.bundlePath ?? "/bundle.avm";
-    const bundleURL = new URL(bundlePath, import.meta.url);
+    const bundlePaths = params.bundlePaths ?? ["/bundle.avm"];
+    this.bundleURLs = bundlePaths.map((p) => new URL(p, import.meta.url).href);
     this.onReloadCallback = params.onReload ?? noop;
     this.debug = params.debug ?? false;
-    this.bundleURL = bundleURL.href;
     this.bridgeConfig = {
       container: params.container,
       script: { url: IFRAME_URL, entrypoint: "runIFrame" },
-      config: { "bundle-path": this.bundleURL },
+      config: Object.fromEntries(
+        this.bundleURLs.map((url, i) => [`bundle-path-${i}`, url])
+      ),
       debug: true,
       onMessage: this.iframeHandler.bind(this)
     };
@@ -182,8 +183,8 @@ var Popcorn = class _Popcorn {
   static async init(options) {
     const { container, ...constructorParams } = options;
     const containerWithDefault = container ?? document.documentElement;
-    const bundlePath = constructorParams.bundlePath ? constructorParams.bundlePath : await resolveBundleURL("/bundle.avm", "/assets/bundle.avm");
-    const popcorn = new _Popcorn({ ...constructorParams, bundlePath, container: containerWithDefault }, INIT_TOKEN);
+    const bundlePaths = constructorParams.bundlePaths && constructorParams.bundlePaths.length > 0 ? constructorParams.bundlePaths : [await resolveBundleURL("/bundle.avm", "/assets/bundle.avm")];
+    const popcorn = new _Popcorn({ ...constructorParams, bundlePaths, container: containerWithDefault }, INIT_TOKEN);
     popcorn.trace("Main: init, params: ", { container, ...constructorParams });
     await popcorn.mount();
     return popcorn;
@@ -488,8 +489,12 @@ async function resolveBundleURL(primary, fallback) {
 var popcornInstance = null;
 var initPromise = null;
 function initPopcorn() {
+  if (initPromise) return;
+  const userBundleMeta = document.querySelector('meta[name="popcorn-user-bundle"]');
+  const bundlePaths = ["./bundle.avm"];
+  if (userBundleMeta) bundlePaths.push(userBundleMeta.content);
   initPromise = (async () => {
-    popcornInstance = await Popcorn.init({ debug: true, bundlePath: "./bundle.avm" });
+    popcornInstance = await Popcorn.init({ debug: true, bundlePaths });
   })();
   initPromise.catch((e) => {
     console.error("Failed to initialize Popcorn runtime:", e);
